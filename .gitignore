@@ -17,6 +17,7 @@ Data/
 datasets/
 raw/
 processed/
+Imported Raw Data Files/
 
 # Ignore output folders
 Reports/

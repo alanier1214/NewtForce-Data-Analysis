@@ -1,36 +1,16 @@
-# Ignore all athlete folders (e.g., "Smith, John")
-*/,
+# Ignore EVERYTHING by default
+*
+
+# EXCEPT allow these:
+!.gitignore
 !*.py
 
-# Allow only Python files in root
-*.csv
-*.xlsx
-*.xls
-*.txt
-*.json
-*.parquet
-*.log
-
-# Ignore typical data folders
-data/
-Data/
-datasets/
-raw/
-processed/
-Imported Raw Data Files/
-
-# Ignore output folders
-Reports/
-**/Reports/
-
-# Ignore Python cache files
+# Ignore Python cache
 __pycache__/
 *.pyc
 
-# Ignore VS Code settings
+# Ignore VS Code + system files
 .vscode/
 .settings/
-
-# Ignore system files
 .DS_Store
 Thumbs.db

@@ -3,12 +3,13 @@ import pandas as pd
 def collect_fastballs(dfs):
     fastballs = []
 
-    for pitch_dict in dfs.items():
+    for date_str, pitch_dict in dfs.items():
         if "FB" in pitch_dict:
             for entry in pitch_dict["FB"]:
-                fastballs.append(entry["summary"])  # or entry["data"]
+                if "summary" in entry and not entry["summary"].empty:
+                    fastballs.append(entry["summary"]) 
 
     if not fastballs:
         return pd.DataFrame()
 
-    return pd.concat([fastballs[fastballs['pitch_code'] == 'FB'] for df in dfs.values()], ignore_index=True) 
+    return pd.concat(fastballs, ignore_index=True) 

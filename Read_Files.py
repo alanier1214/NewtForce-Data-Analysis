@@ -2,6 +2,10 @@ import os
 import re
 import pandas as pd
 import csv
+import Model_Data as md
+
+########## Define file pattern ##########
+athlete_file_pattern = re.compile(r"[^,]+, [^,]+, \d{4}_\d{2}_\d{2}, .+\.csv")
 
 ########## Locate each athlete folder ##########
 def process_athlete_folder(athlete_path):
@@ -15,8 +19,7 @@ def process_athlete_folder(athlete_path):
         if filename.endswith(".csv"):
             match = pattern.match(filename)
             if match:
-                #last, first, 
-                date_str, pitch_type_raw = match.groups()
+                last, first, date_str, pitch_type_raw = match.groups()
 
                 # Extract pitch code ("FB", "SL", etc.)
                 pitch_code = pitch_type_raw.split("_")[-1]
@@ -45,7 +48,7 @@ def process_athlete_folder(athlete_path):
                     "data": df_timeseries
                 })
 
-                print(f"Loaded {pitch_code} for {date_str}")
+                #print(f"Loaded {pitch_code} for {date_str}")
             else:
                 print(f"Filename did not match pattern: {filename}")
     return dfs
@@ -89,6 +92,59 @@ def load_raw_data(path):
 
     return df_summary, df_timeseries
 
-# Check if a single athlete folder or multiple athlete folders
+########## Check if a single athlete folder or multiple athlete folders ##########
 def is_athlete_folder(path):
-    return os.path.isdir(path) and ", " in os.path.basename(path)
+    if not os.path.isdir(path):
+        return False
+
+    # Skip known non-athlete folders
+    if os.path.basename(path).lower() in {"reports", "__pycache__"}:
+        return False
+
+    for f in os.listdir(path):
+        if athlete_file_pattern.match(f):
+            return True
+
+    return False
+
+########## Resolve athlete folders ##########
+def resolve_athlete_folders(root_dir):
+    # Directory is an athlete folder
+    if is_athlete_folder(root_dir):
+        return [root_dir]
+    
+    # Search one level further
+    athlete_folders = []
+    for item in os.listdir(root_dir):
+        path = os.path.join(root_dir, item)
+        if is_athlete_folder(path):
+            athlete_folders.append(path)
+
+    return athlete_folders
+
+########## Get fastball specific summary information ##########
+def get_fastball_data(folders): 
+    if not folders:
+        raise RuntimeError(f"No athlete folders found.")
+
+    all_fastballs = []
+
+    for athlete_path in folders:
+        athlete_name = os.path.basename(os.path.normpath(athlete_path))
+        #print(f"Processing athlete: {athlete_name}")
+
+        dfs = process_athlete_folder(athlete_path)
+        fb_df = md.collect_fastballs(dfs)
+
+        if not fb_df.empty:
+            fb_df["Athlete"] = athlete_name
+            all_fastballs.append(fb_df)
+
+        if all_fastballs:
+            fb_df_all = pd.concat(all_fastballs, ignore_index=True)
+            #print("Combined fastball DataFrame columns:")
+            #print(fb_df_all.columns.tolist())
+        else:
+            fb_df_all = pd.DataFrame()
+            #print("No fastball data found for any athlete.")
+    return fb_df_all

@@ -1,20 +1,19 @@
 import pandas as pd
-import numpy as np
-import Model_Data as md
-import Pitch_Average_Metrics as fp
+from sklearn.impute import SimpleImputer
+import Read_Files as rf
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.inspection import permutation_importance
     
-athlete_path = "./Athletes"
+########## Get all fastball information for athletes ##########    
+root_dir = "./Athletes"
 
-dfs = fp.process_athlete_folder(athlete_path)
+athlete_folders = rf.resolve_athlete_folders(root_dir)
 
-fb_df = md.collect_fastballs(dfs)
+fb_df = rf.get_fastball_data(athlete_folders)
 
-print("Columns in fb_df:")
-print(fb_df.columns.tolist())
-"""########## Start running regressions on fastball data ##########
+########## Start running regressions on fastball data ##########
 target = "Pitch Speed(mph)"
 
 y = pd.to_numeric(fb_df[target], errors="coerce")
@@ -31,13 +30,18 @@ valid = y.notna()
 X = X[valid]
 y = y[valid]
 
-#
+# Use imputer to handle NaN values
+imputer = SimpleImputer(strategy="mean")
+X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns, index=X.index)
+
+# Create train and test splits
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X_imputed, y, test_size=0.2, random_state=42
 )
 
+# Run regression
 model = RandomForestRegressor(
-    n_estimators=500,
+    n_estimators=1000,
     random_state=42,
     max_depth=None
 )
@@ -45,29 +49,25 @@ model = RandomForestRegressor(
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
+
+# Print MAE and R²
 print("MAE:", mean_absolute_error(y_test, y_pred))
 print("R²:", r2_score(y_test, y_pred))
 
+# Look at feature importance and permutatin feature importance
 importance = pd.DataFrame({
     "feature": X.columns,
     "importance": model.feature_importances_
 })
 
 importance = importance.sort_values("importance", ascending=False)
-print(importance.head(15))"""
+print("Top Features and Importance")
+print(importance)
 
-
-
-
-
-
-
-
-
-"""for date, pitch_dict in dfs.items():
-    for pitch, content_list in pitch_dict.items():
-        for content in content_list:
-            summary_df = content['summary']
-            #timeseries_df = content['data']
-            print(summary_df.head())
-            #print(timeseries_df.head())"""
+perm_importance = permutation_importance(model, X_test, y_test, n_repeats=10, random_state=42)
+perm_df = pd.DataFrame({
+    "feature": X.columns,
+    "importance": perm_importance.importances_mean
+}).sort_values("importance", ascending=False)
+print("Top Features and Importance (Permutation)")
+print(perm_df)

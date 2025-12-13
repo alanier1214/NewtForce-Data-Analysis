@@ -49,7 +49,7 @@ def export_pitch_averages(athlete_path, athlete_name, pitch_averages):
     os.makedirs(output_folder, exist_ok=True)
 
     # Clean filename: "Smith, John" → "Smith_John"
-    safe_name = athlete_name#.replace(", ", "_").replace(" ", "_")
+    safe_name = os.path.basename(os.path.join(athlete_path, "Reports"))#.replace(", ", "_").replace(" ", "_")
 
     output_file = os.path.join(output_folder, f"{safe_name} - Pitch Averages.xlsx")
 
@@ -78,63 +78,17 @@ def export_pitch_averages(athlete_path, athlete_name, pitch_averages):
 ########## Main loop to process athlete data ##########
 
 root_dir = "./Athletes/Ball, Drew"  # change if needed
+athlete_folders = rf.resolve_athlete_folders(root_dir)
 
-if rf.is_athlete_folder(root_dir):
-    athlete_folders = [root_dir]
-else:
-    athlete_folders = [
-        os.path.join(root_dir, f)
-        for f in os.listdir(root_dir)
-        if rf.is_athlete_folder(os.path.join(root_dir), f)
-    ]    
-# Must be directory and match "LastName, FirstName" pattern
+if not athlete_folders:
+    raise RuntimeError(f"No athlete folders found under: {root_dir}")
+
 for folder_path in athlete_folders:
-    athlete_name = os.path.join(folder_path)
+    athlete_name = os.path.basename(os.path.normpath(folder_path))
     print(f"\n=== Processing athlete: {athlete_name} ===")
     dfs = rf.process_athlete_folder(folder_path)
     pitch_avgs = calculate_average(dfs)
     export_pitch_averages(folder_path, athlete_name, pitch_avgs)
 
 
-
-
-
-
-
-
-
-
-
-"""########## Export average to file ##########
-output_folder = "."
-
-output_file = os.path.join(output_folder, "pitch_averages.xlsx")
-
-# Get all pitch types
-all_pitch_types = set()
-for date_dict in pitch_averages.values():
-    all_pitch_types.update(date_dict.keys())
-
-with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for pitch_code in all_pitch_types:
-        # Collect rows for all metrics across all dates
-        data_dict = {}
-        for date_str, pitch_dict in pitch_averages.items():
-            if pitch_code in pitch_dict:
-                for metric, value in pitch_dict[pitch_code].items():
-                    if metric not in data_dict:
-                        data_dict[metric] = {}
-                    data_dict[metric][date_str] = value
-
-        # Build DataFrame: rows = metrics, columns = dates
-        df_export = pd.DataFrame(data_dict).T  # metrics as rows
-        df_export = df_export.reindex(sorted(df_export.columns), axis=1)  # sort dates
-
-        # Fill missing combinations with NaN
-        df_export = df_export.fillna("NaN")
-
-        # Write to a sheet named after the pitch code
-        df_export.to_excel(writer, sheet_name=pitch_code)
-
-print(f"Saved all pitch averages to {output_file}")"""
 

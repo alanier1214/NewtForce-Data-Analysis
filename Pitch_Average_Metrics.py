@@ -77,7 +77,7 @@ def export_pitch_averages(athlete_path, athlete_name, pitch_averages):
 
 ########## Main loop to process athlete data ##########
 
-root_dir = "./Athletes/Ball, Drew"  # change if needed
+root_dir = "./Athletes"  # change if needed
 athlete_folders = rf.resolve_athlete_folders(root_dir)
 
 if not athlete_folders:

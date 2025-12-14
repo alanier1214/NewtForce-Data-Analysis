@@ -1,10 +1,11 @@
-# Ignore EVERYTHING by default
-*
+# Ignore files and folders
+*.json
+*.pkl
+*.csv
 Google_File_Download.py
 
 # EXCEPT allow these:
 !.gitignore
-!*.py
 
 # Ignore Python cache
 __pycache__/

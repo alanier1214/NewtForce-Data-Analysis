@@ -3,6 +3,8 @@
 *.pkl
 *.csv
 Google_File_Download.py
+Athletes/
+All Athlete Averages/
 
 # EXCEPT allow these:
 !.gitignore

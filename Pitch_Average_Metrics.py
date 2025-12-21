@@ -75,6 +75,29 @@ def export_pitch_averages(athlete_path, athlete_name, pitch_averages):
 
     print(f"✓ Export complete for {athlete_name}: {output_file}")
 
+def athlete_overall_averages(pitch_averages):
+    """
+    Collapses date + pitch averages into one average per metric for an athlete
+    """
+    records = []
+
+    for date_str, pitch_dict in pitch_averages.items():
+        for pitch_code, metrics in pitch_dict.items():
+            for metric, value in metrics.items():
+                if pd.notna(value):
+                    records.append({
+                        "metric": metric,
+                        "value": value
+                    })
+
+    df = pd.DataFrame(records)
+
+    return (
+        df.groupby("metric")["value"]
+        .mean()
+        .reset_index()
+    )
+
 ########## Main loop to process athlete data ##########
 
 root_dir = "./Athletes"  # change if needed
